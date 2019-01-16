@@ -256,12 +256,14 @@ void Pathfinder::DrawDebug()
 
 	// Drawing start + end lines + points
 	gfxDevice.SetPenColor(0.1f, 0.1f, 0.75f, 0.75f);
-	USVec2D startNodeCenter = GetPolygonBoundingRectangleCenterPoint(mNavMesh, mStartNode.polygon);
-	MOAIDraw::DrawEllipseFill(startNodeCenter.mX, startNodeCenter.mY, 15.f, 15.f, 15);
+	/*USVec2D startNodeCenter = GetPolygonBoundingRectangleCenterPoint(mNavMesh, mStartNode.polygon);
+	MOAIDraw::DrawEllipseFill(startNodeCenter.mX, startNodeCenter.mY, 15.f, 15.f, 15);*/
+	MOAIDraw::DrawEllipseFill(mStartPosition.mX, mStartPosition.mY, 15.f, 15.f, 15);
 
 	gfxDevice.SetPenColor(0.1f, 0.75f, 0.1f, 0.75f);
-	USVec2D endNodeCenter = GetPolygonBoundingRectangleCenterPoint(mNavMesh, mEndNode.polygon);
-	MOAIDraw::DrawEllipseFill(endNodeCenter.mX, endNodeCenter.mY, 15.f, 15.f, 15);
+	/*USVec2D endNodeCenter = GetPolygonBoundingRectangleCenterPoint(mNavMesh, mEndNode.polygon);
+	MOAIDraw::DrawEllipseFill(endNodeCenter.mX, endNodeCenter.mY, 15.f, 15.f, 15);*/
+	MOAIDraw::DrawEllipseFill(mEndPosition.mX, mEndPosition.mY, 15.f, 15.f, 15);
 }
 
 bool Pathfinder::PathfindStep()
@@ -318,11 +320,13 @@ PathPoints Pathfinder::GetPathPoints() const {
 	PathPoints path;
 
 	size_t pathSize = mPath.size();
+	path.points.push_back(mStartPosition);
 	if (pathSize) {
 		for (const NavNode& node : mPath) {
 			path.points.push_back(GetNodeEdgeMiddlePosition(mNavMesh, node));
 		}
 	}
+	path.points.push_back(mEndPosition);
 
 	return path;
 }

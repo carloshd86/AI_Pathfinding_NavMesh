@@ -55,7 +55,7 @@ void Character::OnUpdate(float step)
 	pos.mY += mLinearVelocity.mY * step;
 
 	rot += mAngularVelocity * step;
-
+	
 	SetLoc(pos);
 	SetRot(rot);
 
