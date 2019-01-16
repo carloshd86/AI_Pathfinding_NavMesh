@@ -26,6 +26,33 @@
     <ClCompile Include="pathfinding\navNode.cpp">
       <Filter>pathfinder</Filter>
     </ClCompile>
+    <ClCompile Include="steering\alignSteering.cpp">
+      <Filter>steering</Filter>
+    </ClCompile>
+    <ClCompile Include="steering\alignToMovementSteering.cpp">
+      <Filter>steering</Filter>
+    </ClCompile>
+    <ClCompile Include="steering\arriveSteering.cpp">
+      <Filter>steering</Filter>
+    </ClCompile>
+    <ClCompile Include="steering\fleeSteering.cpp">
+      <Filter>steering</Filter>
+    </ClCompile>
+    <ClCompile Include="steering\obstacleAvoidanceSteering.cpp">
+      <Filter>steering</Filter>
+    </ClCompile>
+    <ClCompile Include="steering\pathFollowingSteering.cpp">
+      <Filter>steering</Filter>
+    </ClCompile>
+    <ClCompile Include="steering\pursueSteering.cpp">
+      <Filter>steering</Filter>
+    </ClCompile>
+    <ClCompile Include="steering\seekSteering.cpp">
+      <Filter>steering</Filter>
+    </ClCompile>
+    <ClCompile Include="obstacles.cpp" />
+    <ClCompile Include="pathPoints.cpp" />
+    <ClCompile Include="params.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="character.h" />
@@ -50,6 +77,40 @@
     <ClInclude Include="pathfinding\navNode.h">
       <Filter>pathfinder</Filter>
     </ClInclude>
+    <ClInclude Include="steering\alignSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="steering\alignToMovementSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="steering\arriveSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="steering\fleeSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="steering\iAlignSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="steering\iSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="steering\obstacleAvoidanceSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="steering\pathFollowingSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="steering\pursueSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="steering\seekSteering.h">
+      <Filter>steering</Filter>
+    </ClInclude>
+    <ClInclude Include="obstacles.h" />
+    <ClInclude Include="pathPoints.h" />
+    <ClInclude Include="params.h" />
+    <ClInclude Include="gameEntity.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="host">
@@ -60,6 +121,9 @@
     </Filter>
     <Filter Include="pathfinder">
       <UniqueIdentifier>{47ed7435-33e6-42c5-a299-696662ae0eb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="steering">
+      <UniqueIdentifier>{4fba2008-16b3-48ab-ac66-b8f1a41eb8cf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
