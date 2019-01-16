@@ -3,6 +3,10 @@
 #include "pathfinder.h"
 #include <algorithm>
 #include <functional>
+#include "pathPoints.h"
+
+const int Pathfinder::LEFT = -512;
+const int Pathfinder::TOP  = -384;
 
 Pathfinder::Pathfinder() : MOAIEntity2D() {
 	RTTI_BEGIN
@@ -21,6 +25,8 @@ void Pathfinder::UpdatePath()
 {
 	mPath.clear();
 	Astar();
+
+	for(IPathListener* listener : mListeners) listener->PathChanged();
 }
 
 void Pathfinder::Astar()
@@ -134,27 +140,24 @@ NavNode Pathfinder::GetNodeFromScreenPosition(const USVec2D& screenPosition) con
 	NavNode result;
 	bool found = false;
 
-	int left = -512;
-	int top = -384;
-
 	size_t navMeshSize = mNavMesh.polygons.size();
 	for (size_t i = 0; i < navMeshSize; ++i) {
 		const Polygon& polygon = mNavMesh.polygons[i];
 
 		// First check: look if point is inside the bounding rectangle
-		float minX = -left * 4.f;
-		float minY = -top * 4.f;
-		float maxX = left * 4.f;
-		float maxY = top * 4.f;
+		float minX = -LEFT * 4.f;
+		float minY = -TOP * 4.f;
+		float maxX = LEFT * 4.f;
+		float maxY = TOP * 4.f;
 		for (const USVec2D& point : polygon.points) {
-			if (minX > point.mX - left) minX = point.mX - left;
-			if (minY > point.mY - top)  minY = point.mY - top;
-			if (maxX < point.mX - left) maxX = point.mX - left;
-			if (maxY < point.mY - top)  maxY = point.mY - top;
+			if (minX > point.mX - LEFT) minX = point.mX - LEFT;
+			if (minY > point.mY - TOP)  minY = point.mY - TOP;
+			if (maxX < point.mX - LEFT) maxX = point.mX - LEFT;
+			if (maxY < point.mY - TOP)  maxY = point.mY - TOP;
 		}
 
-		float fixedX = screenPosition.mX - left;
-		float fixedY = screenPosition.mY - top;
+		float fixedX = screenPosition.mX - LEFT;
+		float fixedY = screenPosition.mY - TOP;
 
 		if (minX <= fixedX && minY <= fixedY && maxX >= fixedX && maxY >= fixedY) {
 			// Point is inside the bounding rectangle
@@ -202,24 +205,20 @@ void Pathfinder::DrawDebug()
 		MOAIDraw::DrawPolygonFilled(polygon.points);
 	}
 
-	gfxDevice.SetPenColor(1.0f, 1.0f, 0.0f, 0.75f);
+	gfxDevice.SetPenColor(1.0f, 1.0f, 0.0f, 0.25f);
 	for (auto& link : mNavMesh.links) {
-		Polygon& polygonStart = mNavMesh.polygons[link.start.polygon];
-		USVec2D& edgePointStart1 = polygonStart.points[link.start.edgestart];
-		USVec2D& edgePointStart2 = polygonStart.points[link.start.edgeend];
-		Polygon& polygonEnd = mNavMesh.polygons[link.end.polygon];
-		USVec2D& edgePointEnd1 = polygonEnd.points[link.end.edgestart];
-		USVec2D& edgePointEnd2 = polygonEnd.points[link.end.edgeend];
-		USVec2D edgePointStartMiddle = USVec2D((edgePointStart1.mX + edgePointStart2.mX) / 2.f, (edgePointStart1.mY + edgePointStart2.mY) / 2.f);
-		USVec2D edgePointEndMiddle = USVec2D((edgePointEnd1.mX + edgePointEnd2.mX) / 2.f, (edgePointEnd1.mY + edgePointEnd2.mY) / 2.f);
+		USVec2D edgePointStartMiddle = GetNodeEdgeMiddlePosition(mNavMesh, link.start.polygon, link.start.edgestart, link.start.edgeend);
+		USVec2D edgePointEndMiddle   = GetNodeEdgeMiddlePosition(mNavMesh, link.end.polygon, link.end.edgestart, link.end.edgeend);
 		MOAIDraw::DrawEllipseFill(edgePointStartMiddle.mX, edgePointStartMiddle.mY, 5.f, 5.f, 15);
 		MOAIDraw::DrawEllipseFill(edgePointEndMiddle.mX, edgePointEndMiddle.mY, 5.f, 5.f, 15);
 		MOAIDraw::DrawLine(edgePointStartMiddle, edgePointEndMiddle);
 	}
 
 	if (!mPath.empty()) {
+
+		// Drawing path polygons
+		/*
 		for (NavNode& node : mPath) {
-			
 			//Contorno con un color: MOAIDraw::DrawPolygon
 			gfxDevice.SetPenColor(0.0f, 0.0f, 0.0f, 1.0f);
 			MOAIDraw::DrawPolygon(mNavMesh.polygons[node.polygon].points);
@@ -227,13 +226,42 @@ void Pathfinder::DrawDebug()
 			gfxDevice.SetPenColor(1.0f, 0.0f, 0.0f, 0.75f);
 			MOAIDraw::DrawPolygonFilled(mNavMesh.polygons[node.polygon].points);
 		}
+		*/
+
+		// Drawing path lines + points
+		size_t pathSize = mPath.size();
+		if (pathSize > 1) {
+			gfxDevice.SetPenColor(1.0f, 1.0f, 1.0f, 0.75f);
+			for (size_t i = 0; i < pathSize - 1; ++i) {
+				NavNode& startNode = mPath[i];
+				NavNode& endNode = mPath[i + 1];
+
+				USVec2D edgePointStartMiddle = GetNodeEdgeMiddlePosition(mNavMesh, startNode);
+				USVec2D edgePointEndMiddle   = GetNodeEdgeMiddlePosition(mNavMesh, endNode);
+				MOAIDraw::DrawEllipseFill(edgePointStartMiddle.mX, edgePointStartMiddle.mY, 5.f, 5.f, 15);
+				MOAIDraw::DrawEllipseFill(edgePointEndMiddle.mX, edgePointEndMiddle.mY, 5.f, 5.f, 15);
+				MOAIDraw::DrawLine(edgePointStartMiddle, edgePointEndMiddle);
+			}
+		}
 	}
 
+	// Drawing start + end polygons
+	/*
 	gfxDevice.SetPenColor(1.0f, 1.0f, 1.0f, 0.1f);
 	MOAIDraw::DrawPolygonFilled(mNavMesh.polygons[mStartNode.polygon].points);
 
 	gfxDevice.SetPenColor(0.0f, 0.75f, 0.0f, 0.1f);
 	MOAIDraw::DrawPolygonFilled(mNavMesh.polygons[mEndNode.polygon].points);
+	*/
+
+	// Drawing start + end lines + points
+	gfxDevice.SetPenColor(0.1f, 0.1f, 0.75f, 0.75f);
+	USVec2D startNodeCenter = GetPolygonBoundingRectangleCenterPoint(mNavMesh, mStartNode.polygon);
+	MOAIDraw::DrawEllipseFill(startNodeCenter.mX, startNodeCenter.mY, 15.f, 15.f, 15);
+
+	gfxDevice.SetPenColor(0.1f, 0.75f, 0.1f, 0.75f);
+	USVec2D endNodeCenter = GetPolygonBoundingRectangleCenterPoint(mNavMesh, mEndNode.polygon);
+	MOAIDraw::DrawEllipseFill(endNodeCenter.mX, endNodeCenter.mY, 15.f, 15.f, 15);
 }
 
 bool Pathfinder::PathfindStep()
@@ -242,11 +270,66 @@ bool Pathfinder::PathfindStep()
     return true;
 }
 
+USVec2D Pathfinder::GetPolygonBoundingRectangleCenterPoint(const NavMesh& navMesh, int polygonIndex) {
+	USVec2D result(0.f, 0.f);
+
+	if (polygonIndex < static_cast<int>(navMesh.polygons.size())) {
+		const Polygon& polygon = navMesh.polygons[polygonIndex];
+
+		// First check: look if point is inside the bounding rectangle
+		float minX = -LEFT * 4.f;
+		float minY = -TOP * 4.f;
+		float maxX = LEFT * 4.f;
+		float maxY = TOP * 4.f;
+		for (const USVec2D& point : polygon.points) {
+			if (minX > point.mX - LEFT) minX = point.mX - LEFT;
+			if (minY > point.mY - TOP)  minY = point.mY - TOP;
+			if (maxX < point.mX - LEFT) maxX = point.mX - LEFT;
+			if (maxY < point.mY - TOP)  maxY = point.mY - TOP;
+		}
+
+		minX += LEFT;
+		minY += TOP;
+		maxX += LEFT;
+		maxY += TOP;
+
+		result.mX = (minX + maxX) / 2.f;
+		result.mY = (minY + maxY) / 2.f;
+	}
+
+	return result;
+}
+
+USVec2D Pathfinder::GetNodeEdgeMiddlePosition(const NavMesh& navMesh, const NavNode& navNode) {
+	return GetNodeEdgeMiddlePosition(navMesh, navNode.polygon, navNode.edgeStart, navNode.edgeEnd);
+}
+
+USVec2D Pathfinder::GetNodeEdgeMiddlePosition(const NavMesh& navMesh, int polygonIndex, int edgeStartIndex, int edgeEndIndex)  {
+	const Polygon& polygon = navMesh.polygons[polygonIndex];
+	const USVec2D& edgePoint1 = polygon.points[edgeStartIndex];
+	const USVec2D& edgePoint2 = polygon.points[edgeEndIndex];
+	USVec2D edgePointMiddle((edgePoint1.mX + edgePoint2.mX) / 2.f, (edgePoint1.mY + edgePoint2.mY) / 2.f);
+
+	return edgePointMiddle;
+}
 
 
+PathPoints Pathfinder::GetPathPoints() const {
+	PathPoints path;
 
+	size_t pathSize = mPath.size();
+	if (pathSize) {
+		for (const NavNode& node : mPath) {
+			path.points.push_back(GetNodeEdgeMiddlePosition(mNavMesh, node));
+		}
+	}
 
+	return path;
+}
 
+void Pathfinder::RegisterListener(IPathListener& listener) {
+	mListeners.push_back(&listener);
+}
 
 
 

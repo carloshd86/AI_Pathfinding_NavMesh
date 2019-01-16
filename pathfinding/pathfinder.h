@@ -6,9 +6,17 @@
 #include "navNode.h"
 #include "PathNode.h"
 
+struct PathPoints;
+
 class Pathfinder: public virtual MOAIEntity2D
 {
 public:
+	class IPathListener {
+		public:
+			virtual void PathChanged() = 0;
+	};
+
+
 	Pathfinder();
 	~Pathfinder();
 
@@ -18,8 +26,10 @@ public:
 	void SetEndPosition   (float x, float y) { mEndPosition   = USVec2D(x, y); mEndNode   = GetNodeFromScreenPosition(mEndPosition);   UpdatePath(); }
 	const USVec2D& GetStartPosition() const { return mStartPosition;}
 	const USVec2D& GetEndPosition()   const { return mEndPosition;}
+	PathPoints GetPathPoints() const;
 
     bool PathfindStep();
+	void RegisterListener(IPathListener& listener);
 private:
 	void UpdatePath();
 	void Astar();
@@ -30,10 +40,14 @@ private:
 	int CalculateDistance(const NavNode& node) const;
 	USVec2D GetStartNodePoint() const;
 	USVec2D GetEndNodePoint() const;
-
+	
 	static bool PathNodeSort(PathNode* pathNode1, PathNode* pathNode2);
+	static USVec2D GetNodeEdgeMiddlePosition(const NavMesh& navMesh, const NavNode& navNode);
+	static USVec2D GetNodeEdgeMiddlePosition(const NavMesh& navMesh, int polygonIndex, int edgeStartIndex, int edgeEndIndex);
+	static USVec2D GetPolygonBoundingRectangleCenterPoint(const NavMesh& navMesh, int polygonIndex);
 
 	std::vector<NavNode> mPath;
+	std::vector<IPathListener*> mListeners;
 
 private:
 	USVec2D mStartPosition;
@@ -41,6 +55,9 @@ private:
 	NavNode mStartNode;
 	NavNode mEndNode;
 	NavMesh mNavMesh;
+
+	static const int LEFT;
+	static const int TOP;
 
 	// Lua configuration
 public:
